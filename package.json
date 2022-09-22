@@ -1,0 +1,22 @@
+{
+  "name": "www-review",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@codeday/topo": "^7.2.7",
+    "annotpdf": "^1.0.15",
+    "next": "12",
+    "pdfjs-dist": "^2.16.105",
+    "react-pdf": "^5.7.2"
+  },
+  "devDependencies": {
+    "eslint": "8.23.1",
+    "eslint-config-next": "12.3.1"
+  }
+}
