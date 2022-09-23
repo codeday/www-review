@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useMemo} from 'react';
 import {AnnotationFactory} from "annotpdf";
 import {Document, Page, pdfjs} from 'react-pdf';
 import {Box, Skelly, Spinner, Text, Button, Textarea} from '@codeday/topo/Atom'
@@ -34,6 +34,37 @@ export default function ResumeReview({pdf}) {
     if(annotator && !annotatedFile) {
         setAnnotatedFile(annotator.write())
     }
+    const document = useMemo(() => (
+        <Document
+            loading={<Skelly h={pageHeight * numPages} />}
+            file={{data: annotatedFile}}
+        >
+            { [...Array(numPages).keys()].map((_, idx) => {
+                return (
+                    <Page
+                        key={idx}
+                        loading={<Skelly h={pageHeight} />}
+                        pageNumber={idx+1}
+                        onClick={(e) => {
+                            if (isOpen) return;
+                            //https://stackoverflow.com/a/48390126
+                            const rect = e.currentTarget.getBoundingClientRect()
+                            const offsetX = e.pageX - window.pageXOffset - rect.left
+                            const offsetY = e.pageY - window.pageYOffset - rect.bottom
+                            setPopoverX(e.pageX)
+                            setPopoverY(e.pageY)
+                            setAnnotationProps({
+                                page: idx,
+                                rect: [offsetX, -offsetY, offsetX + 10, -offsetY + 10],
+                            })
+                            onToggle()
+                        }}
+                    />
+                )
+            })
+            }
+        </Document>
+    ), [numPages, annotator, annotatedFile])
 
     return (
         <Box>
@@ -54,35 +85,24 @@ export default function ResumeReview({pdf}) {
                     <Box position="absolute" left={popoverX} top={popoverY}/>
                 </PopoverTrigger>
                 <PopoverContent>
-                        <PopoverHeader>
-                            <Text bold>Compose Feedback</Text>
-                        </PopoverHeader>
-                        <PopoverArrow />
-                        <PopoverCloseButton />
-                        <PopoverBody>
-                            <Textarea value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)}/>
-                        </PopoverBody>
+                    <PopoverHeader>
+                        <Text bold>Compose Feedback</Text>
+                    </PopoverHeader>
+                    <PopoverArrow />
+                    <PopoverCloseButton />
+                    <PopoverBody>
+                        <Textarea value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)}/>
+                    </PopoverBody>
                     <PopoverFooter textAlign="right">
-                            <Button mr={4} color="red" variant="ghost" onClick={onClose}>
-                                <UiX />
-                            </Button>
+                        <Button mr={4} color="red" variant="ghost" onClick={onClose}>
+                            <UiX />
+                        </Button>
                         <Button color="green" variant="ghost" onClick={() => {
                             annotator.createTextAnnotation({
                                 ...annotationProps,
-                                content: feedbackText
-                            })
-                            annotator.createTextAnnotation({
-                                page: 0,
-                                rect: [100, 100, 100, 100],
-                                content: 'test'
-                            })
-                            console.log({
-                                ...annotationProps,
-                                content: feedbackText
+                                contents: feedbackText
                             })
                             setAnnotatedFile(annotator.write())
-                            console.log(annotator.annotations)
-                            annotator.save()
                             onClose()
                         }}>
                             <UiCheck />
@@ -91,42 +111,7 @@ export default function ResumeReview({pdf}) {
                 </PopoverContent>
             </Popover>
             <Box  display="inline-block">
-                <Document
-                    loading={<Skelly h={pageHeight * numPages} />}
-                    file={{data: annotatedFile}}
-                >
-                    { [...Array(numPages).keys()].map((_, idx) => {
-                        return (
-                            <Page
-                                key={idx}
-                                loading={<Skelly h={pageHeight} />}
-                                pageNumber={idx+1}
-                                onClick={(e) => {
-                                    if (isOpen) return;
-                                    //https://stackoverflow.com/a/48390126
-                                    const rect = e.currentTarget.getBoundingClientRect()
-                                    const offsetX = e.pageX - window.pageXOffset - rect.left
-                                    const offsetY = e.pageY - window.pageYOffset - rect.bottom
-                                    setPopoverX(e.pageX)
-                                    setPopoverY(e.pageY)
-                                    annotator.createTextAnnotation(
-                                        {
-                                            page: idx,
-                                            rect: [offsetX, -offsetY, offsetX + 10, -offsetY + 10],
-                                            content: 'hello'
-                                        }
-                                    )
-                                    setAnnotationProps({
-                                        page: idx,
-                                        rect: [offsetX, -offsetY, offsetX + 10, -offsetY + 10],
-                                    })
-                                    onToggle()
-                                }}
-                            />
-                        )
-                    })
-                    }
-                </Document>
+                {document}
             </Box>
         </Box>
     )
