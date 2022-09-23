@@ -7,8 +7,8 @@ export default function Page({
     children, title, ...props
                              }) {
     return (
-        <Box position="relative">
-            <Header underscore position="relative">
+        <Box>
+            <Header underscore>
                 <SiteLogo>
                     <a href="/">
                         <CodeDay text="Resume Review" />
